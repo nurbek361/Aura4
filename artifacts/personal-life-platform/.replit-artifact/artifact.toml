@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/"
+title = "Personal Life Platform"
+description = "An offline-first personal life companion for tasks, habits, finances, health, learning, and daily planning, designed for private local use with optional online providers."
+version = "1.0.0"
+id = "artifacts/personal-life-platform"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/" ]
+localPort = 22446
+
+[services.development]
+run = "pnpm --filter @workspace/personal-life-platform run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/personal-life-platform", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/personal-life-platform", "run", "serve" ]
+
+[services.env]
+PORT = "22446"
+BASE_PATH = "/"
