@@ -1,0 +1,1 @@
+# Keep app-specific release rules here. Signing credentials never belong in source control.

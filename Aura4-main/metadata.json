@@ -1,0 +1,6 @@
+{
+  "name": "Aura • AI Life OS",
+  "description": "Personal AI Life Operating System with Home AI Center, Cinema, Lossless Music player, and Modules Hub for tasks, finances, habits, and spiritual growth.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,19 @@
+# Never upload dependencies or generated files
+node_modules/
+.expo/
+.expo-shared/
+dist/
+build/
+static-build/
+coverage/
+.git/
+
+# The repository contains a separate native Android prototype that is not
+# wired to the Expo/React Native application. Let EAS/Expo generate Android.
+android/
+ios/
+
+# Local environment and secrets
+.env
+.env.local
+.env.*.local
