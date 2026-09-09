@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "steps": {
+    "install": {
+      "commands": ["rm -rf node_modules", "npm ci"]
+    }
+  },
+  "deploy": {
+    "startCommand": "node dist/server.cjs"
+  }
+}
