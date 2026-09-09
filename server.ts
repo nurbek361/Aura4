@@ -7,13 +7,11 @@ import ytSearch from 'yt-search';
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
-const GROQ_API_KEY =
-  process.env.GROQ_API_KEY ||
-  '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';
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
@@ -23,6 +21,9 @@ app.get('/api/health', (req: Request, res: Response) => {
 // Groq AI Chat Completion Endpoint
 app.post('/api/groq/chat', async (req: Request, res: Response) => {
   try {
+    if (!GROQ_API_KEY) {
+      return res.status(503).json({ error: 'GROQ_API_KEY is not configured' });
+    }
     let { messages, temperature = 0.7, max_tokens = 800, model = 'openai/gpt-oss-120b', tools, tool_choice } = req.body;
 
     if (!messages || !Array.isArray(messages)) {

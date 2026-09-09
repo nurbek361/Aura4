@@ -35,6 +35,7 @@ export const AURA_APP_TOOLS = [
               'music',
               'cinema',
               'hub',
+              'reports',
               'calendar',
               'reminders',
               'finance',
@@ -85,8 +86,6 @@ export const AURA_APP_TOOLS = [
   },
 ] as const;
 
-const FALLBACK_GROQ_KEY = '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';
-
 export async function askGroq(
   prompt: string,
   systemPrompt = 'Ты — Aura, персональная интеллектуальная операционная система и голосовой ИИ-компаньон. Отвечай кратко, емко, вежливо, на русском языке, в стиле премиального футуристичного ассистента.',
@@ -112,30 +111,6 @@ export async function askGroq(
     }
   } catch (err) {
     console.warn('Server Groq proxy unreachable, falling back to direct Groq call', err);
-  }
-
-  // Direct client-side fallback if server route is unavailable
-  try {
-    const directRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${FALLBACK_GROQ_KEY}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature: 0.7,
-        max_tokens: 600,
-      }),
-    });
-
-    if (directRes.ok) {
-      const data = await directRes.json();
-      return data.choices?.[0]?.message?.content?.trim() || 'Ответ от Aura получен.';
-    }
-  } catch (directErr) {
-    console.error('Direct Groq API error:', directErr);
   }
 
   return 'Связь с нейросетью Aura восстанавливается. Пожалуйста, повторите запрос через мгновение.';
@@ -191,23 +166,6 @@ export async function askGroqWithTools(
     }
   } catch (err) {
     console.warn('Server Groq tool-call proxy unreachable, falling back to direct call', err);
-  }
-
-  try {
-    const directRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${FALLBACK_GROQ_KEY}`,
-      },
-      body: JSON.stringify(body),
-    });
-    if (directRes.ok) {
-      const data = await directRes.json();
-      return extractFrom(data);
-    }
-  } catch (directErr) {
-    console.error('Direct Groq tool-call API error:', directErr);
   }
 
   return { content: null, toolCalls: [] };

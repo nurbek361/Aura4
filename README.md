@@ -1,20 +1,24 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Aura — AI Life OS
 
-# Run and deploy your AI Studio app
+Минималистичный AI-дэшборд личной системы: фокус, финансы, здоровье, ритм, медиа и отчёты Aura за день, неделю и месяц.
 
-This contains everything you need to run your app locally.
+## Run locally
 
-View your app in AI Studio: https://ai.studio/apps/89300f7d-bc4b-4395-a673-6893d82cace4
+**Prerequisites:** Node.js 20+
 
-## Run Locally
+```bash
+npm install
+cp .env.example .env
+npm run dev
+```
 
-**Prerequisites:**  Node.js
+`GROQ_API_KEY` в `.env` нужен только для голосового AI-чата. Основной интерфейс, графики и локальные отчёты работают без него.
 
+## Production
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+npm run build
+npm start
+```
+
+Подробная инструкция GitHub → Railway находится в [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).

@@ -74,18 +74,18 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           <span className="text-[10px] font-semibold tracking-tight mt-0.5">Music</span>
         </button>
 
-        {/* Hub Tab */}
+        {/* Reports Tab */}
         <button
-          onClick={() => onSelectTab('hub')}
-          aria-label="Modules Hub"
+          onClick={() => onSelectTab('reports')}
+          aria-label="AI Reports"
           className={`flex flex-col items-center justify-center min-w-[50px] min-h-[48px] rounded-full transition-all duration-300 ${
-            currentTab === 'hub'
+            currentTab === 'reports'
               ? 'text-[#d0bcff] bg-[#a078ff]/20 shadow-[0_0_16px_rgba(208,188,255,0.35)]'
               : 'text-[#cbc3d7]/70 hover:text-[#e1e2ec]'
           }`}
         >
-          <span className="material-symbols-outlined text-[22px]">grid_view</span>
-          <span className="text-[10px] font-semibold tracking-tight mt-0.5">Hub</span>
+          <span className="material-symbols-outlined text-[22px]">insights</span>
+          <span className="text-[10px] font-semibold tracking-tight mt-0.5">Отчёты</span>
         </button>
       </div>
     </nav>

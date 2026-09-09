@@ -41,6 +41,8 @@ export const Header: React.FC<HeaderProps> = ({
         return 'AURA • ДРУЗЬЯ & СОЦСЕТЬ';
       case 'hub':
         return 'AURA • ВСЕ РАЗДЕЛЫ';
+      case 'reports':
+        return 'AURA • AI-ОТЧЕТЫ';
       default:
         return 'AURA • LIFE OS';
     }
@@ -67,6 +69,8 @@ export const Header: React.FC<HeaderProps> = ({
         return 'Награды & XP';
       case 'friends':
         return 'Круг общения';
+      case 'reports':
+        return 'Картина дня';
       default:
         return userName;
     }

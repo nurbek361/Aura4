@@ -11,6 +11,7 @@ export type NavigationTab =
   | 'achievements'
   | 'friends'
   | 'hub'
+  | 'reports'
   | 'shorts'
   | 'news'
   | 'settings';

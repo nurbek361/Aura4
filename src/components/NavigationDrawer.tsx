@@ -32,6 +32,23 @@ const MENU_ITEMS: MenuItem[] = [
     group: 'core',
   },
   {
+    id: 'reports',
+    title: 'AI-отчёты',
+    subtitle: 'День, неделя и месяц в одной картине',
+    icon: 'auto_graph',
+    badge: 'Новый',
+    color: '#c084fc',
+    group: 'core',
+  },
+  {
+    id: 'hub',
+    title: 'Все разделы',
+    subtitle: 'Связанные модули Aura в одном месте',
+    icon: 'grid_view',
+    color: '#a78bfa',
+    group: 'core',
+  },
+  {
     id: 'calendar',
     title: 'Календарь & События',
     subtitle: 'Важные даты, дни рождения, отсчет',

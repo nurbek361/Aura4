@@ -12,7 +12,7 @@ import { FinanceScreen } from './components/FinanceScreen';
 import { FriendsScreen } from './components/FriendsScreen';
 import { Header } from './components/Header';
 import { HealthSportScreen } from './components/HealthSportScreen';
-import { HomeScreen } from './components/HomeScreen';
+import { DashboardScreen } from './components/DashboardScreen';
 import { HubScreen } from './components/HubScreen';
 import { LibraryScreen } from './components/LibraryScreen';
 import { MusicScreen } from './components/MusicScreen';
@@ -20,6 +20,7 @@ import { NavigationDrawer } from './components/NavigationDrawer';
 import { NewsScreen } from './components/NewsScreen';
 import { ProfileModal } from './components/ProfileModal';
 import { RemindersScreen } from './components/RemindersScreen';
+import { ReportsScreen } from './components/ReportsScreen';
 import { ShortsScreen } from './components/ShortsScreen';
 import { SpiritualityScreen } from './components/SpiritualityScreen';
 import { VoiceAssistantModal } from './components/VoiceAssistantModal';
@@ -79,7 +80,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#10131a] text-[#e1e2ec] flex flex-col items-center justify-start overflow-x-hidden font-sans selection:bg-[#a078ff]/30 selection:text-[#d0bcff]">
+    <div className="min-h-screen w-full aura-app text-[#f7f4ff] flex flex-col items-center justify-start overflow-x-hidden font-sans selection:bg-[#a078ff]/30 selection:text-[#f0eaff]">
       {/* Fixed Frosted Header with Menu Toggle */}
       <Header
         currentTab={currentTab}
@@ -91,7 +92,7 @@ export default function App() {
       {/* Main Single Column Fluid Shell (max-w-[480px] to match mobile screenshot proportions exactly) */}
       <main className="w-full max-w-[480px] flex-1 flex flex-col relative px-4 sm:px-5 pt-20 pb-28">
         {currentTab === 'home' && (
-          <HomeScreen
+          <DashboardScreen
             onOpenVoice={() => setIsVoiceModalOpen(true)}
             onNavigateTab={handleSelectTab}
           />
@@ -123,6 +124,8 @@ export default function App() {
         {currentTab === 'finance' && <FinanceScreen />}
 
         {currentTab === 'health' && <HealthSportScreen />}
+
+        {currentTab === 'reports' && <ReportsScreen onNavigateTab={handleSelectTab} />}
 
         {currentTab === 'library' && <LibraryScreen />}
 

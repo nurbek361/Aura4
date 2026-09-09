@@ -10,11 +10,19 @@
     width: 100vw;
     margin: 0;
     padding: 0;
-    background-color: #10131a;
-    color: #e1e2ec;
+    background: #080817;
+    color: #f7f4ff;
     font-family: var(--font-body);
     overscroll-behavior: none;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 50% -12%, rgba(128, 74, 255, 0.28), transparent 34rem),
+      radial-gradient(circle at 100% 35%, rgba(53, 35, 151, 0.24), transparent 30rem),
+      linear-gradient(145deg, #070714 0%, #111033 49%, #080817 100%);
   }
 
   .font-headline {
@@ -28,6 +36,72 @@
   .pt-safe {
     padding-top: env(safe-area-inset-top, 0px);
   }
+}
+
+/* Aura visual system: restrained copy, vivid data, one connected surface. */
+.aura-app {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% -8%, rgba(139, 92, 246, 0.16), transparent 26rem),
+    linear-gradient(180deg, rgba(10, 9, 31, 0.78), rgba(7, 7, 21, 0.94));
+}
+
+.aura-grid {
+  background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+}
+
+.aura-card {
+  background: linear-gradient(145deg, rgba(31, 25, 71, .82), rgba(13, 14, 37, .7));
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 18px 55px rgba(2, 1, 14, .34), inset 0 1px rgba(255,255,255,.045);
+  backdrop-filter: blur(24px);
+}
+
+.aura-card:hover {
+  border-color: rgba(196, 181, 253, .28);
+  box-shadow: 0 24px 70px rgba(32, 14, 93, .34), inset 0 1px rgba(255,255,255,.08);
+}
+
+.aura-orb {
+  background: radial-gradient(circle at 35% 28%, #efe4ff 0 3%, #b789ff 10%, #6b3be8 32%, #20134f 66%, #0b0823 100%);
+  box-shadow: 0 0 26px rgba(165, 116, 255, .8), 0 0 100px rgba(113, 69, 255, .42);
+}
+
+.aura-ring {
+  border: 1px solid rgba(197, 165, 255, .5);
+  box-shadow: 0 0 22px rgba(165, 116, 255, .26), inset 0 0 22px rgba(165, 116, 255, .08);
+}
+
+.aura-shimmer {
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,.15) 45%, transparent 70%);
+  background-size: 220% 100%;
+  animation: aura-shimmer 4s ease-in-out infinite;
+}
+
+@keyframes aura-shimmer {
+  0%, 35% { background-position: 220% 0; }
+  70%, 100% { background-position: -30% 0; }
+}
+
+@keyframes aura-breathe {
+  0%, 100% { transform: scale(.96); opacity: .7; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+.aura-breathe { animation: aura-breathe 4.8s ease-in-out infinite; }
+
+@keyframes aura-float-slow {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-9px) rotate(2deg); }
+}
+
+.aura-float-slow { animation: aura-float-slow 6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
 
 /* Custom scrollbar hiding */
