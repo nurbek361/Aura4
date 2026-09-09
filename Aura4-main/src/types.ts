@@ -195,6 +195,10 @@ export interface CinemaItem {
   episode?: string;
   currentTime?: string;
   totalTime?: string;
+  source?: 'youtube' | 'archive';
+  streamUrl?: string;
+  sourceUrl?: string;
+  archiveIdentifier?: string;
 }
 
 export interface QuranSurah {

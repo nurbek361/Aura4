@@ -152,6 +152,8 @@ export const CinemaScreen: React.FC<CinemaScreenProps> = ({ onOpenVoice, initial
   const [isSearchingYt, setIsSearchingYt] = useState(false);
   const [ytSearchResults, setYtSearchResults] = useState<CinemaItem[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isSearchingArchive, setIsSearchingArchive] = useState(false);
+  const [archiveResults, setArchiveResults] = useState<CinemaItem[]>([]);
 
   const categories = [
     'Все',
@@ -242,6 +244,49 @@ export const CinemaScreen: React.FC<CinemaScreenProps> = ({ onOpenVoice, initial
       console.error('YouTube movie search error:', err);
     } finally {
       setIsSearchingYt(false);
+    }
+  };
+
+  const handleSearchArchive = async () => {
+    setIsSearchingArchive(true);
+    try {
+      const res = await fetch(`/api/archive/movies${searchQuery.trim() ? `?q=${encodeURIComponent(searchQuery.trim())}` : ''}`);
+      if (!res.ok) throw new Error('Internet Archive search failed');
+      const data = await res.json();
+      const mapped: CinemaItem[] = (data.items || []).map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        genre: 'Public Domain • Internet Archive',
+        duration: 'Полный фильм',
+        durationMinutes: 90,
+        year: String(item.year || 'Archive'),
+        rating: 'Free',
+        posterUrl: item.thumbnail,
+        backdropUrl: item.thumbnail,
+        badge: 'Легальный public-domain показ',
+        source: 'archive',
+        sourceUrl: item.sourceUrl,
+        archiveIdentifier: item.identifier,
+      })) as CinemaItem[];
+      setArchiveResults(mapped);
+    } catch (err) {
+      console.error('Internet Archive search error:', err);
+      setArchiveResults([]);
+    } finally {
+      setIsSearchingArchive(false);
+    }
+  };
+
+  const handlePlayArchiveMovie = async (movie: CinemaItem) => {
+    const identifier = (movie as CinemaItem & { archiveIdentifier?: string }).archiveIdentifier;
+    if (!identifier) return;
+    try {
+      const res = await fetch(`/api/archive/movies/${encodeURIComponent(identifier)}`);
+      if (!res.ok) throw new Error('Playable file not found');
+      const data = await res.json();
+      setActiveMovie({ ...movie, source: 'archive', streamUrl: data.streamUrl, sourceUrl: data.sourceUrl });
+    } catch (err) {
+      console.error('Archive movie playback error:', err);
     }
   };
 
@@ -469,6 +514,44 @@ export const CinemaScreen: React.FC<CinemaScreenProps> = ({ onOpenVoice, initial
         )}
       </div>
 
+      <section className="rounded-2xl border border-cyan-200/20 bg-cyan-200/[.05] p-4 shadow-lg">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-cyan-200 text-[19px]">local_movies</span>
+            <div>
+              <h3 className="text-xs font-bold text-cyan-100">Internet Archive · бесплатное кино</h3>
+              <p className="mt-0.5 text-[10px] text-white/45">Public Domain и открытые показы</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleSearchArchive}
+            disabled={isSearchingArchive}
+            className="rounded-xl bg-cyan-200 px-3 py-2 text-[11px] font-bold text-[#042b35] transition hover:bg-cyan-100 disabled:opacity-50"
+          >
+            {isSearchingArchive ? 'Ищем…' : 'Найти'}
+          </button>
+        </div>
+        {archiveResults.length > 0 && (
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {archiveResults.slice(0, 6).map((movie) => (
+              <button
+                key={movie.id}
+                type="button"
+                onClick={() => handlePlayArchiveMovie(movie)}
+                className="flex items-center gap-3 rounded-xl border border-white/[.06] bg-black/15 p-2 text-left transition hover:bg-white/[.06]"
+              >
+                <img src={movie.posterUrl} alt="" className="h-12 w-16 rounded-lg object-cover" />
+                <span className="min-w-0 flex-1">
+                  <span className="block line-clamp-2 text-xs font-semibold text-white/85">{movie.title}</span>
+                  <span className="mt-1 block text-[10px] text-cyan-100/60">Смотреть бесплатно ↗</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* Category Filter Pills Carousel */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 -mx-4 px-4">
         {categories.map((cat) => {
@@ -687,7 +770,7 @@ export const CinemaScreen: React.FC<CinemaScreenProps> = ({ onOpenVoice, initial
       {/* ========================================================= */}
       {/* REAL CINEMA MODAL */}
       {/* ========================================================= */}
-      {activeMovie && activeMovie.youtubeId && (
+      {activeMovie && (activeMovie.youtubeId || activeMovie.streamUrl) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/95 backdrop-blur-2xl animate-in fade-in duration-300">
           <div className="relative w-full max-w-4xl rounded-3xl bg-[#0e1118] border border-white/[0.12] shadow-[0_25px_70px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col max-h-[95vh]">
             {/* Top Cinema Player Bar */}
@@ -729,16 +812,18 @@ export const CinemaScreen: React.FC<CinemaScreenProps> = ({ onOpenVoice, initial
               </div>
             </div>
 
-            {/* YouTube Iframe Player Container */}
-            {/* Using parameters: modestbranding=1, rel=0, iv_load_policy=3, controls=1, color=white, showinfo=0 */}
             <div className="relative w-full aspect-video bg-black flex items-center justify-center">
-              <iframe
-                src={`https://www.youtube-nocookie.com/embed/${activeMovie.youtubeId}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&controls=1&showinfo=0&fs=1&color=white`}
-                title={activeMovie.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="w-full h-full border-0"
-              />
+              {activeMovie.source === 'archive' && activeMovie.streamUrl ? (
+                <video src={activeMovie.streamUrl} controls autoPlay className="h-full w-full" poster={activeMovie.posterUrl} />
+              ) : (
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${activeMovie.youtubeId}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&controls=1&showinfo=0&fs=1&color=white`}
+                  title={activeMovie.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="w-full h-full border-0"
+                />
+              )}
             </div>
 
             {/* Bottom Controls / Info Bar */}

@@ -11,6 +11,8 @@
 | Open Library | Books | https://openlibrary.org/search.json | None | REAL | Human-facing search; cache responses and identify app |
 | TVmaze | TV/movie metadata | https://api.tvmaze.com/search/shows | None | REAL | Show metadata and links |
 | Apple iTunes Search | Music metadata/previews | https://itunes.apple.com/search | None | REAL | Store content usage is subject to Apple terms |
+| Internet Archive Advanced Search + Metadata | Public-domain movies and browser-playable files | https://archive.org/advancedsearch.php | None | REAL | Search and playback are limited to items exposed by the archive; rights vary by item |
+| Audius API | Open music catalog and web streams | https://api.audius.co/v1 | `app_name` query parameter | REAL | Search and stream endpoints; artists retain their rights |
 | Hacker News Firebase API | Tech news | https://hacker-news.firebaseio.com/v0/ | None | REAL | Top stories; original links preserved |
 
 ## API key policy
@@ -23,8 +25,19 @@ No real API keys are stored in the repository. APIs that require credentials (fo
 - Open Library documents `/search.json` and asks applications to identify themselves and cache responses.
 - TVmaze documents `/search/shows`.
 - Apple documents the iTunes Search API and usage terms.
+- Internet Archive documents Advanced Search and item metadata/file APIs.
+- Audius documents REST search and track stream endpoints for its open music catalog.
 
-Date checked: 2026-09-04
+Date checked: 2026-09-10
+
+## Free media routes added to the web app
+
+- `GET /api/archive/movies?q=...` — searches Internet Archive feature films.
+- `GET /api/archive/movies/:identifier` — resolves a browser-playable MP4/WebM/OGV file from item metadata.
+- `GET /api/audius/search?q=...` — searches Audius tracks.
+- `GET /api/audius/stream/:trackId` — proxies the signed Audius stream redirect.
+
+The app does not extract protected streams or bypass paid services. YouTube playback remains an official embed; Internet Archive and Audius links are preserved in the UI.
 
 ## TMDB — Movies / Trailers
 - Name: The Movie Database API v3

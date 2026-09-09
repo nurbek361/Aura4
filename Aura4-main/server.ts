@@ -336,6 +336,142 @@ app.get('/api/youtube/search', async (req: Request, res: Response) => {
   }
 });
 
+const ARCHIVE_FALLBACK_MOVIES = [
+  {
+    identifier: 'night-alarm',
+    title: 'Night Alarm',
+    description: 'Классический public-domain детектив',
+    year: '1948',
+  },
+  {
+    identifier: 'his_girl_friday',
+    title: 'His Girl Friday',
+    description: 'Классическая комедия',
+    year: '1940',
+  },
+  {
+    identifier: 'nosferatu_1922',
+    title: 'Nosferatu',
+    description: 'Немое кино, public domain',
+    year: '1922',
+  },
+];
+
+const formatArchiveMovies = (items: any[]) =>
+  items.map((movie: any) => ({
+    id: `archive-${movie.identifier}`,
+    identifier: movie.identifier,
+    title: movie.title || movie.identifier,
+    description: movie.description || 'Бесплатный публичный архив',
+    year: movie.year || 'Public Domain',
+    thumbnail: `https://archive.org/services/img/${encodeURIComponent(movie.identifier)}`,
+    sourceUrl: `https://archive.org/details/${encodeURIComponent(movie.identifier)}`,
+  }));
+
+// Free, legal public-domain movie search via Internet Archive.
+// Playback URLs are resolved only from the item's own metadata.
+app.get('/api/archive/movies', async (req: Request, res: Response) => {
+  try {
+    const rawQuery = ((req.query.q as string) || '').trim();
+    const safeQuery = rawQuery.replace(/[^\p{L}\p{N}\s-]/gu, ' ').trim();
+    const searchQuery = `collection:feature_films AND mediatype:movies${
+      safeQuery ? ` AND title:(${safeQuery})` : ''
+    }`;
+    const url = new URL('https://archive.org/advancedsearch.php');
+    url.searchParams.set('q', searchQuery);
+    url.searchParams.append('fl[]', 'identifier');
+    url.searchParams.append('fl[]', 'title');
+    url.searchParams.append('fl[]', 'description');
+    url.searchParams.append('fl[]', 'year');
+    url.searchParams.set('rows', '12');
+    url.searchParams.set('page', '1');
+    url.searchParams.set('output', 'json');
+
+    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) throw new Error(`Internet Archive returned ${response.status}`);
+    const data = await response.json();
+    const items = formatArchiveMovies(data?.response?.docs || []);
+    return res.json({ items, source: 'Internet Archive • public domain' });
+  } catch (error: any) {
+    console.error('Internet Archive movie search error:', error);
+    const query = ((req.query.q as string) || '').toLowerCase();
+    const fallback = ARCHIVE_FALLBACK_MOVIES.filter((movie) => !query || `${movie.title} ${movie.description}`.toLowerCase().includes(query));
+    return res.json({
+      items: formatArchiveMovies(fallback.length > 0 ? fallback : ARCHIVE_FALLBACK_MOVIES),
+      source: 'Internet Archive • public domain • fallback catalog',
+    });
+  }
+});
+
+app.get('/api/archive/movies/:identifier', async (req: Request, res: Response) => {
+  try {
+    const identifier = req.params.identifier;
+    const response = await fetch(`https://archive.org/metadata/${encodeURIComponent(identifier)}`, {
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) throw new Error(`Internet Archive returned ${response.status}`);
+    const data = await response.json();
+    const mediaFiles = (data?.files || [])
+      .filter((file: any) => file?.name && /\.(mp4|m4v|webm|ogv)$/i.test(file.name) && file.private !== 'true')
+      .sort((a: any, b: any) => Number(b.size || 0) - Number(a.size || 0));
+    const file = mediaFiles[0];
+    if (!file) return res.status(404).json({ error: 'No browser-playable video found' });
+
+    return res.json({
+      title: data?.metadata?.title || identifier,
+      streamUrl: `https://archive.org/download/${encodeURIComponent(identifier)}/${encodeURIComponent(file.name)}`,
+      sourceUrl: `https://archive.org/details/${encodeURIComponent(identifier)}`,
+      format: file.format || 'video',
+    });
+  } catch (error: any) {
+    console.error('Internet Archive movie metadata error:', error);
+    return res.status(502).json({ error: error?.message || 'Archive metadata failed' });
+  }
+});
+
+// Audius is a free open music catalog with browser-playable streams.
+app.get('/api/audius/search', async (req: Request, res: Response) => {
+  try {
+    const query = ((req.query.q as string) || 'ambient').trim();
+    const url = new URL('https://api.audius.co/v1/tracks/search');
+    url.searchParams.set('query', query);
+    url.searchParams.set('app_name', 'aura_life_os');
+    url.searchParams.set('limit', '12');
+    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) throw new Error(`Audius returned ${response.status}`);
+    const data = await response.json();
+    const items = (data?.data || []).map((track: any) => ({
+      id: `audius-${track.id}`,
+      audiusId: track.id,
+      title: track.title || 'Без названия',
+      artist: track.user?.name || 'Audius artist',
+      genre: track.genre || 'Open music',
+      duration: `${Math.floor((track.duration || 0) / 60)}:${String((track.duration || 0) % 60).padStart(2, '0')}`,
+      thumbnail: track.artwork?.['480x480'] || track.user?.profile_picture?.['480x480'] || '',
+      streamUrl: `/api/audius/stream/${encodeURIComponent(track.id)}`,
+      sourceUrl: track.permalink ? `https://audius.co${track.permalink}` : 'https://audius.co',
+      downloadable: Boolean(track.is_downloadable),
+    }));
+    return res.json({ items, source: 'Audius • open music catalog' });
+  } catch (error: any) {
+    console.error('Audius search error:', error);
+    return res.status(502).json({ error: error?.message || 'Audius search failed' });
+  }
+});
+
+app.get('/api/audius/stream/:trackId', async (req: Request, res: Response) => {
+  try {
+    const url = `https://api.audius.co/v1/tracks/${encodeURIComponent(req.params.trackId)}/stream?app_name=aura_life_os`;
+    const response = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(15000) });
+    const location = response.headers.get('location');
+    if (!location) return res.status(502).json({ error: 'Audius stream URL unavailable' });
+    return res.redirect(302, location);
+  } catch (error: any) {
+    console.error('Audius stream error:', error);
+    return res.status(502).json({ error: error?.message || 'Audius stream failed' });
+  }
+});
+
 // Quran Surah Proxy with Arabic text, Russian translation and Transliteration
 const quranSurahCache = new Map<number, any>();
 

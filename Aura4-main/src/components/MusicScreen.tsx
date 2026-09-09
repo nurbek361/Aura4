@@ -10,6 +10,9 @@ export interface YtMusicTrack {
   albumArt: string;
   duration: string;
   qualityTag: string;
+  source?: 'youtube' | 'audius';
+  streamUrl?: string;
+  sourceUrl?: string;
 }
 
 // Curated Popular Music Video Clips (strictly 3-4 minutes)
@@ -118,6 +121,8 @@ export const MusicScreen: React.FC<MusicScreenProps> = ({ initialQuery, onInitia
   const [isSearchingClips, setIsSearchingClips] = useState(false);
   const [clipSearchResults, setClipSearchResults] = useState<YtMusicTrack[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isSearchingAudius, setIsSearchingAudius] = useState(false);
+  const [audiusResults, setAudiusResults] = useState<YtMusicTrack[]>([]);
 
   // Equalizer animation
   useEffect(() => {
@@ -208,6 +213,36 @@ export const MusicScreen: React.FC<MusicScreenProps> = ({ initialQuery, onInitia
       console.error('Music clip search error:', err);
     } finally {
       setIsSearchingClips(false);
+    }
+  };
+
+  const handleSearchAudius = async () => {
+    const q = searchQuery.trim() || 'ambient';
+    setIsSearchingAudius(true);
+    try {
+      const res = await fetch(`/api/audius/search?q=${encodeURIComponent(q)}`);
+      if (!res.ok) throw new Error('Audius search failed');
+      const data = await res.json();
+      const mapped: YtMusicTrack[] = (data.items || []).map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        artist: item.artist,
+        genre: `${item.genre || 'Open music'} • Audius`,
+        youtubeId: '',
+        albumArt: item.thumbnail || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80',
+        duration: item.duration || '—',
+        qualityTag: 'Open stream',
+        source: 'audius',
+        streamUrl: item.streamUrl,
+        sourceUrl: item.sourceUrl,
+      }));
+      setAudiusResults(mapped);
+      if (mapped[0]) handleSelectTrack(mapped[0]);
+    } catch (err) {
+      console.error('Audius search error:', err);
+      setAudiusResults([]);
+    } finally {
+      setIsSearchingAudius(false);
     }
   };
 
@@ -381,6 +416,52 @@ export const MusicScreen: React.FC<MusicScreenProps> = ({ initialQuery, onInitia
         )}
       </div>
 
+      <section className="rounded-2xl border border-violet-300/20 bg-violet-300/[.06] p-4 shadow-lg">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-violet-200 text-[19px]">public</span>
+            <div>
+              <h3 className="text-xs font-bold text-violet-100">Audius · бесплатная музыка</h3>
+              <p className="mt-0.5 text-[10px] text-white/45">Открытый каталог с веб-воспроизведением</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleSearchAudius}
+            disabled={isSearchingAudius}
+            className="rounded-xl bg-violet-300 px-3 py-2 text-[11px] font-bold text-[#25124e] transition hover:bg-violet-200 disabled:opacity-50"
+          >
+            {isSearchingAudius ? 'Ищем…' : 'Найти'}
+          </button>
+        </div>
+        {audiusResults.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {audiusResults.slice(0, 5).map((track) => {
+              const isCurrent = currentTrack.id === track.id;
+              return (
+                <button
+                  key={track.id}
+                  type="button"
+                  onClick={() => handleSelectTrack(track)}
+                  className={`flex w-full items-center gap-3 rounded-xl border p-2 text-left transition ${
+                    isCurrent ? 'border-violet-200/50 bg-violet-300/15' : 'border-white/[.06] bg-black/15 hover:bg-white/[.06]'
+                  }`}
+                >
+                  <img src={track.albumArt} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-xs font-semibold text-white/85">{track.title}</span>
+                    <span className="block truncate text-[10px] text-white/40">{track.artist} · {track.duration}</span>
+                  </span>
+                  <span className="material-symbols-outlined text-[18px] text-violet-200">
+                    {isCurrent ? 'volume_up' : 'play_arrow'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
       {/* ========================================================= */}
       {/* MAIN PLAYER HERO CARD */}
       {/* ========================================================= */}
@@ -417,15 +498,25 @@ export const MusicScreen: React.FC<MusicScreenProps> = ({ initialQuery, onInitia
           </div>
         </div>
 
-        {/* REAL YOUTUBE VIDEO CLIP IFRAME */}
+        {/* Audius native audio stream or YouTube legal embed */}
         <div className="relative w-full aspect-video sm:aspect-[21/9] rounded-2xl overflow-hidden bg-black border border-white/[0.08] shadow-inner">
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${currentTrack.youtubeId}?autoplay=1&enablejsapi=1&modestbranding=1&rel=0&iv_load_policy=3&controls=1`}
-            title={currentTrack.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="w-full h-full border-0"
-          />
+          {currentTrack.source === 'audius' && currentTrack.streamUrl ? (
+            <div className="flex h-full flex-col items-center justify-center gap-4 bg-gradient-to-br from-violet-950 via-[#10102c] to-cyan-950 p-6">
+              <div className="aura-orb h-20 w-20 rounded-full animate-aura-float" />
+              <audio src={currentTrack.streamUrl} controls autoPlay className="w-full max-w-md" onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
+              <a href={currentTrack.sourceUrl} target="_blank" rel="noreferrer" className="text-[10px] text-violet-200/70 hover:text-white">
+                Открыть страницу трека на Audius ↗
+              </a>
+            </div>
+          ) : (
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${currentTrack.youtubeId}?autoplay=1&enablejsapi=1&modestbranding=1&rel=0&iv_load_policy=3&controls=1`}
+              title={currentTrack.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full border-0"
+            />
+          )}
         </div>
 
         {/* Controls & Track Title */}
